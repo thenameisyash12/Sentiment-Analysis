@@ -1,0 +1,104 @@
+# Sentiment Analysis in Jupyter Notebook
+# Install required libraries (run this cell first)
+!pip install textblob vaderSentiment
+!python -m textblob.download_corpora
+
+# Import libraries
+from textblob import TextBlob
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+import pandas as pd
+
+# Sample text data
+texts = [
+    "I love this product! It's amazing.",
+    "This is the worst movie I've ever seen.",
+    "The weather is okay today, not too bad.",
+    "I'm so excited about the new features!",
+    "The service was terrible and the staff was rude.",
+    "It's a decent phone for the price."
+]
+
+# Function for TextBlob sentiment analysis
+def analyze_sentiment_textblob(text):
+    analysis = TextBlob(text)
+    polarity = analysis.sentiment.polarity
+    subjectivity = analysis.sentiment.subjectivity
+    
+    if polarity > 0:
+        sentiment = 'positive'
+    elif polarity < 0:
+        sentiment = 'negative'
+    else:
+        sentiment = 'neutral'
+    
+    return {
+        'text': text,
+        'polarity': polarity,
+        'subjectivity': subjectivity,
+        'sentiment': sentiment
+    }
+
+# Function for VADER sentiment analysis
+def analyze_sentiment_vader(text):
+    analyzer = SentimentIntensityAnalyzer()
+    scores = analyzer.polarity_scores(text)
+    
+    # Determine sentiment based on compound score
+    if scores['compound'] >= 0.05:
+        sentiment = 'positive'
+    elif scores['compound'] <= -0.05:
+        sentiment = 'negative'
+    else:
+        sentiment = 'neutral'
+    
+    return {
+        'text': text,
+        'negative': scores['neg'],
+        'neutral': scores['neu'],
+        'positive': scores['pos'],
+        'compound': scores['compound'],
+        'sentiment': sentiment
+    }
+
+# Analyze each text with both methods
+results_textblob = [analyze_sentiment_textblob(text) for text in texts]
+results_vader = [analyze_sentiment_vader(text) for text in texts]
+
+# Convert to DataFrames for better display
+df_textblob = pd.DataFrame(results_textblob)
+df_vader = pd.DataFrame(results_vader)
+
+# Display results
+print("TextBlob Sentiment Analysis:")
+display(df_textblob)
+
+print("\nVADER Sentiment Analysis:")
+display(df_vader)
+
+# Compare results
+comparison = pd.DataFrame({
+    'Text': texts,
+    'TextBlob Sentiment': df_textblob['sentiment'],
+    'VADER Sentiment': df_vader['sentiment']
+})
+
+print("\nComparison of Results:")
+display(comparison)
+
+# Analyze custom text
+print("\nCustom Text Analysis")
+print("-------------------")
+custom_text = input("Enter a sentence to analyze (or press Enter to skip): ")
+
+if custom_text:
+    print("\nTextBlob Analysis:")
+    tb_result = analyze_sentiment_textblob(custom_text)
+    for key, value in tb_result.items():
+        print(f"{key}: {value}")
+
+    print("\nVADER Analysis:")
+    vader_result = analyze_sentiment_vader(custom_text)
+    for key, value in vader_result.items():
+        print(f"{key}: {value}")
+else:
+    print("No custom text entered.")
